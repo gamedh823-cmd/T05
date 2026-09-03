@@ -192,6 +192,67 @@ select:disabled {
   flex-wrap: wrap;
 }
 
+.region-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.favorite-add-btn {
+  background: #fff4d6;
+  color: #8a6100;
+}
+
+.favorites-row {
+  margin-top: 14px;
+}
+
+.favorites-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.favorite-chip {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 8px;
+  padding: 7px 8px 7px 13px;
+  border-radius: 999px;
+  background: #e9eef5;
+  color: #172033;
+  font-size: 0.85rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.favorite-chip-remove {
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 999px;
+  width: 20px;
+  height: 20px;
+  line-height: 1;
+  background: #d9e1eb;
+  color: #46536b;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.favorite-chip-name {
+  flex-shrink: 0;
+  border: 0;
+  background: none;
+  padding: 0;
+  color: #172033;
+  font-weight: 700;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
 .label {
   margin: 0 0 5px;
   color: #69778c;

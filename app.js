@@ -6,6 +6,8 @@ const REGION_DATA_URLS = [
 
 const CACHE_PREFIX = "koreaDetailedWeatherCacheV5:";
 const SELECT_KEY = "koreaDetailedWeatherSelectionV5";
+const FAVORITES_KEY = "koreaDetailedWeatherFavoritesV5";
+const MAX_FAVORITES = 8;
 const STALE_MINUTES = 90;
 
 const T04_STATE_KEY = "alephT04StateV1";
@@ -73,6 +75,8 @@ const weatherBtn = $("weather-btn");
 const refreshBtn = $("refresh-btn");
 const selectedCoordinateEl = $("selected-coordinate");
 const selectedRegionTitleEl = $("selected-region-title");
+const addFavoriteBtn = $("add-favorite-btn");
+const favoritesListEl = $("favorites-list");
 
 const statusBadgeEl = $("status-badge");
 const statusMessageEl = $("status-message");
@@ -110,6 +114,7 @@ let regionRows = [];
 let selectedRegion = null;
 let currentWeather = null;
 let currentApiUrl = "";
+let favorites = [];
 
 function weatherInfo(code) {
   return weatherCodeMap[Number(code)] || ["🌡️", `날씨 코드 ${code ?? "-"}`];
@@ -609,11 +614,13 @@ function updateSelectedRegion() {
 
   if (!selectedRegion) {
     weatherBtn.disabled = true;
+    addFavoriteBtn.disabled = true;
     selectedCoordinateEl.textContent = "-";
     return;
   }
 
   weatherBtn.disabled = false;
+  addFavoriteBtn.disabled = false;
 
   const regionName = `${selectedRegion.sidonm} ${selectedRegion.sggnm} ${selectedRegion.emdnm}`;
   selectedRegionTitleEl.textContent = regionName;
@@ -675,6 +682,84 @@ function restoreSelection() {
   if (dongs.includes(saved.dong)) dongSelect.value = saved.dong;
 
   updateSelectedRegion();
+}
+
+// --- 즐겨찾는 지역 (카드1_고정스펙.md FAV-01~FAV-07 구현, FAV-08~FAV-10은 미착수) ---
+
+function loadFavorites() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(FAVORITES_KEY));
+    favorites = Array.isArray(raw) ? raw : [];
+  } catch {
+    favorites = [];
+  }
+}
+
+function saveFavorites() {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
+}
+
+function renderFavorites() {
+  favoritesListEl.innerHTML = "";
+
+  favorites.forEach((fav) => {
+    const chip = document.createElement("span");
+    chip.className = "favorite-chip";
+
+    const nameBtn = document.createElement("button");
+    nameBtn.type = "button";
+    nameBtn.className = "favorite-chip-name";
+    nameBtn.textContent = `${fav.sido} ${fav.sigungu} ${fav.dong}`;
+    nameBtn.addEventListener("click", () => switchToFavorite(fav.regionKey));
+
+    const removeBtn = document.createElement("button");
+    removeBtn.type = "button";
+    removeBtn.className = "favorite-chip-remove";
+    removeBtn.textContent = "×";
+    removeBtn.setAttribute("aria-label", "즐겨찾기 삭제");
+    removeBtn.addEventListener("click", () => removeFavorite(fav.regionKey));
+
+    chip.appendChild(nameBtn);
+    chip.appendChild(removeBtn);
+    favoritesListEl.appendChild(chip);
+  });
+}
+
+function addCurrentToFavorites() {
+  if (!selectedRegion) return;
+
+  const exists = favorites.some((f) => f.regionKey === selectedRegion.regionKey);
+  if (exists) return;
+
+  favorites.push({
+    sido: selectedRegion.sidonm,
+    sigungu: selectedRegion.sggnm,
+    dong: selectedRegion.emdnm,
+    regionKey: selectedRegion.regionKey
+  });
+
+  saveFavorites();
+  renderFavorites();
+}
+
+function removeFavorite(regionKey) {
+  favorites = favorites.filter((f) => f.regionKey !== regionKey);
+  saveFavorites();
+  renderFavorites();
+}
+
+function switchToFavorite(regionKey) {
+  const target = regionRows.find((r) => r.regionKey === regionKey);
+  if (!target) return;
+
+  sidoSelect.value = target.sidonm;
+  populateSigungu();
+  sigunguSelect.value = target.sggnm;
+  populateDong();
+  dongSelect.value = target.emdnm;
+  updateSelectedRegion();
+  saveSelection();
+  fetchWeather();
 }
 
 function buildWeatherUrl(region) {
@@ -1191,6 +1276,7 @@ dongSelect.addEventListener("change", updateSelectedRegion);
 weatherBtn.addEventListener("click", fetchWeather);
 refreshBtn.addEventListener("click", fetchWeather);
 retryFetchBtn.addEventListener("click", fetchWeather);
+addFavoriteBtn.addEventListener("click", addCurrentToFavorites);
 
 sourceBtn.addEventListener("click", () => {
   if (currentApiUrl) window.open(currentApiUrl, "_blank", "noopener,noreferrer");
@@ -1212,4 +1298,6 @@ replayResetBtn.addEventListener("click", () => {
 
 renderReplayRows(getReplayState(), null);
 renderReadingStatus(getT04State(), null);
+loadFavorites();
+renderFavorites();
 loadRegions();
