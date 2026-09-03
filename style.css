@@ -241,6 +241,17 @@ select:disabled {
   font-weight: 800;
 }
 
+.favorites-empty {
+  margin: 4px 0 0;
+}
+
+.favorites-limit-notice {
+  margin: 8px 0 0;
+  color: #b42318;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
 .favorite-chip-name {
   flex-shrink: 0;
   border: 0;

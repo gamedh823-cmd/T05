@@ -77,6 +77,7 @@ const selectedCoordinateEl = $("selected-coordinate");
 const selectedRegionTitleEl = $("selected-region-title");
 const addFavoriteBtn = $("add-favorite-btn");
 const favoritesListEl = $("favorites-list");
+const favoritesLimitNoticeEl = $("favorites-limit-notice");
 
 const statusBadgeEl = $("status-badge");
 const statusMessageEl = $("status-message");
@@ -684,14 +685,16 @@ function restoreSelection() {
   updateSelectedRegion();
 }
 
-// --- 즐겨찾는 지역 (카드1_고정스펙.md FAV-01~FAV-07 구현, FAV-08~FAV-10은 미착수) ---
+// --- 즐겨찾는 지역 (카드1_고정스펙.md FAV-01~FAV-10 구현 완료) ---
 
 function loadFavorites() {
   try {
     const raw = JSON.parse(localStorage.getItem(FAVORITES_KEY));
     favorites = Array.isArray(raw) ? raw : [];
   } catch {
+    // FAV-10: 저장된 값이 깨진 JSON이어도 죽지 않고 빈 목록으로 안전하게 되돌린다.
     favorites = [];
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(favorites));
   }
 }
 
@@ -701,6 +704,14 @@ function saveFavorites() {
 
 function renderFavorites() {
   favoritesListEl.innerHTML = "";
+
+  if (favorites.length === 0) {
+    const emptyEl = document.createElement("p");
+    emptyEl.className = "favorites-empty helper-text";
+    emptyEl.textContent = "즐겨찾기한 지역이 없습니다.";
+    favoritesListEl.appendChild(emptyEl);
+    return;
+  }
 
   favorites.forEach((fav) => {
     const chip = document.createElement("span");
@@ -731,6 +742,13 @@ function addCurrentToFavorites() {
   const exists = favorites.some((f) => f.regionKey === selectedRegion.regionKey);
   if (exists) return;
 
+  // FAV-08: 최대 개수를 넘으면 추가하지 않고 안내 문구만 보여준다.
+  if (favorites.length >= MAX_FAVORITES) {
+    favoritesLimitNoticeEl.classList.remove("hidden");
+    return;
+  }
+  favoritesLimitNoticeEl.classList.add("hidden");
+
   favorites.push({
     sido: selectedRegion.sidonm,
     sigungu: selectedRegion.sggnm,
@@ -746,6 +764,7 @@ function removeFavorite(regionKey) {
   favorites = favorites.filter((f) => f.regionKey !== regionKey);
   saveFavorites();
   renderFavorites();
+  favoritesLimitNoticeEl.classList.add("hidden");
 }
 
 function switchToFavorite(regionKey) {
